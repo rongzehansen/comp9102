@@ -150,8 +150,8 @@ public final class Scanner {
         break;
     }
     
-    if (Character.isDigit(currentChar)) {
-      return handleIntLiteral();
+    if (Character.isDigit(currentChar) || (currentChar == '.' && Character.isDigit(inspectChar(1)))) {
+      return handleNumericLiteral();
     }
     
     if (Character.isLetter(currentChar) || currentChar == '_') {
@@ -167,11 +167,43 @@ public final class Scanner {
     return tokenKind;
   }
   
-  private int handleIntLiteral() {
+  private int handleNumericLiteral() {
+    boolean hasFraction = false;
+    boolean hasExponent = false;
+    
     while (Character.isDigit(currentChar)) {
       accept();
     }
-    return Token.INTLITERAL;
+    
+    if (currentChar == '.') {
+      hasFraction = true;
+      accept();
+      while (Character.isDigit(currentChar)) {
+        accept();
+      }
+    }
+    
+    if (currentChar == 'e' || currentChar == 'E') {
+      if (Character.isDigit(inspectChar(1))) {
+        hasExponent = true;
+        accept();
+        while (Character.isDigit(currentChar)) {
+          accept();
+        }
+      } else if ((inspectChar(1) == '+' || inspectChar(1) == '-') && Character.isDigit(inspectChar(2))) {
+        hasExponent = true;
+        accept();
+        accept();
+        while (Character.isDigit(currentChar)) {
+          accept();
+        }
+      } 
+    }
+    if (hasFraction || hasExponent) {
+      return Token.FLOATLITERAL;
+    } else {
+      return Token.INTLITERAL;
+    }
   }
   
   private int handleIdentifierOrKeyword() {
